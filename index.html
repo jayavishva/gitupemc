@@ -109,5 +109,106 @@
   </main>
 
   <footer class="site-footer section-shell"><a class="brand" href="#home"><span class="brand-icon">J<span>D</span></span><span class="brand-name">JAYAVISHVA<span class="brand-dot">.</span></span></a><p>Designed with intent. Built with code.</p><a href="#home" class="back-top">BACK TO TOP ↑</a><span class="copyright">© <span id="year"></span> JAYAVISHVA D.</span></footer>
+  <script >
+    // Portfolio interactions: loader, scroll reveal, menu, pointer glow and progress.
+(() => {
+  const loader = document.querySelector('.page-loader');
+  const year = document.querySelector('#year');
+  const progress = document.querySelector('.scroll-progress span');
+  const glow = document.querySelector('.cursor-glow');
+  const menuToggle = document.querySelector('.menu-toggle');
+  const nav = document.querySelector('.nav-links');
+
+  if (year) year.textContent = new Date().getFullYear();
+
+  window.addEventListener('load', () => {
+    window.setTimeout(() => loader?.classList.add('loaded'), 450);
+  });
+
+  // Reveal elements as they enter the viewport.
+  const revealItems = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries, currentObserver) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          currentObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -35px 0px' });
+    revealItems.forEach(item => observer.observe(item));
+  } else {
+    revealItems.forEach(item => item.classList.add('is-visible'));
+  }
+
+  // Scroll progress bar.
+  let scrollQueued = false;
+  const updateProgress = () => {
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const percent = maxScroll > 0 ? (window.scrollY / maxScroll) * 100 : 0;
+    if (progress) progress.style.width = `${percent}%`;
+    scrollQueued = false;
+  };
+  window.addEventListener('scroll', () => {
+    if (!scrollQueued) {
+      window.requestAnimationFrame(updateProgress);
+      scrollQueued = true;
+    }
+  }, { passive: true });
+  updateProgress();
+
+  // Mouse-follow glow is disabled for touch-first devices in CSS.
+  if (glow && window.matchMedia('(pointer: fine)').matches) {
+    window.addEventListener('pointermove', event => {
+      glow.style.left = `${event.clientX}px`;
+      glow.style.top = `${event.clientY}px`;
+    }, { passive: true });
+  }
+
+  // Mobile navigation.
+  const closeMenu = () => {
+    nav?.classList.remove('open');
+    menuToggle?.setAttribute('aria-expanded', 'false');
+    menuToggle?.setAttribute('aria-label', 'Open navigation');
+    document.body.classList.remove('menu-open');
+  };
+  menuToggle?.addEventListener('click', () => {
+    const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
+    menuToggle.setAttribute('aria-expanded', String(!isOpen));
+    menuToggle.setAttribute('aria-label', isOpen ? 'Open navigation' : 'Close navigation');
+    nav?.classList.toggle('open', !isOpen);
+    document.body.classList.toggle('menu-open', !isOpen);
+  });
+  nav?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 700) closeMenu();
+  });
+
+  // Small magnetic effect on primary buttons for mouse devices.
+  if (window.matchMedia('(pointer: fine)').matches) {
+    document.querySelectorAll('.magnetic').forEach(button => {
+      button.addEventListener('pointermove', event => {
+        const rect = button.getBoundingClientRect();
+        const x = event.clientX - rect.left - rect.width / 2;
+        const y = event.clientY - rect.top - rect.height / 2;
+        button.style.transform = `translate(${x * 0.08}px, ${y * 0.12}px)`;
+      });
+      button.addEventListener('pointerleave', () => { button.style.transform = ''; });
+    });
+  }
+
+  // Smooth anchor navigation with a small menu-safe offset.
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener('click', event => {
+      const target = document.querySelector(link.getAttribute('href'));
+      if (!target) return;
+      event.preventDefault();
+      closeMenu();
+      target.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+  });
+})();
+                      
+  </script>
 </body>
 </html>
